@@ -76,12 +76,16 @@ func GinLogrusLogger() gin.HandlerFunc {
 		statusCode := c.Writer.Status()
 		clientIP := c.ClientIP()
 		method := c.Request.Method
+		userAgent := strings.TrimSpace(c.Request.UserAgent())
 		errorMessage := c.Errors.ByType(gin.ErrorTypePrivate).String()
 
 		if requestID == "" {
 			requestID = "--------"
 		}
 		logLine := fmt.Sprintf("%3d | %13v | %15s | %-7s \"%s\"", statusCode, latency, clientIP, method, path)
+		if userAgent != "" {
+			logLine += fmt.Sprintf(" | ua=%q", userAgent)
+		}
 		if creditsUsed(c) {
 			logLine += " [credits]"
 		}
