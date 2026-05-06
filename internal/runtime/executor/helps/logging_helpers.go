@@ -80,6 +80,9 @@ func RecordAPIRequest(ctx context.Context, cfg *config.Config, info UpstreamRequ
 	if auth := formatAuthInfo(info); auth != "" {
 		builder.WriteString(fmt.Sprintf("Auth: %s\n", auth))
 	}
+	if userAgent := strings.TrimSpace(info.Headers.Get("User-Agent")); userAgent != "" {
+		builder.WriteString(fmt.Sprintf("User-Agent: %s\n", userAgent))
+	}
 	builder.WriteString("\nHeaders:\n")
 	writeHeaders(builder, info.Headers)
 	builder.WriteString("\nBody:\n")
@@ -211,6 +214,9 @@ func RecordAPIWebsocketRequest(ctx context.Context, cfg *config.Config, info Ups
 	}
 	if auth := formatAuthInfo(info); auth != "" {
 		builder.WriteString(fmt.Sprintf("Auth: %s\n", auth))
+	}
+	if userAgent := strings.TrimSpace(info.Headers.Get("User-Agent")); userAgent != "" {
+		builder.WriteString(fmt.Sprintf("User-Agent: %s\n", userAgent))
 	}
 	builder.WriteString("Headers:\n")
 	writeHeaders(builder, info.Headers)
