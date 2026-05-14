@@ -90,6 +90,9 @@ func (e *OpenAICompatExecutor) Execute(ctx context.Context, auth *cliproxyauth.A
 		to = sdktranslator.FromString("openai-response")
 		endpoint = "/responses/compact"
 	}
+	if opts.Alt == "embeddings" {
+		endpoint = "/embeddings"
+	}
 	originalPayloadSource := req.Payload
 	if len(opts.OriginalRequest) > 0 {
 		originalPayloadSource = opts.OriginalRequest
