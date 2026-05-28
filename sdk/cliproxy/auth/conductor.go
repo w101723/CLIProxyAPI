@@ -673,6 +673,12 @@ func (m *Manager) authSupportsRouteModel(registryRef *registry.ModelRegistry, au
 	if routeKey == "" {
 		return true
 	}
+	if strings.EqualFold(strings.TrimSpace(auth.Provider), "qwen-rerank") {
+		model := strings.ToLower(strings.TrimSpace(thinking.ParseSuffix(routeModel).ModelName))
+		if strings.Contains(model, "qwen") && strings.Contains(model, "rerank") {
+			return true
+		}
+	}
 	if registryRef.ClientSupportsModel(auth.ID, routeKey) {
 		return true
 	}
@@ -965,6 +971,10 @@ func (m *Manager) rebuildAPIKeyModelAliasLocked(cfg *internalconfig.Config) {
 			}
 		case "codex":
 			if entry := resolveCodexAPIKeyConfig(cfg, auth); entry != nil {
+				compileAPIKeyModelAliasForModels(byAlias, entry.Models)
+			}
+		case "qwen-rerank":
+			if entry := resolveQwenRerankAPIKeyConfig(cfg, auth); entry != nil {
 				compileAPIKeyModelAliasForModels(byAlias, entry.Models)
 			}
 		case "vertex":
@@ -1683,6 +1693,8 @@ func (m *Manager) applyAPIKeyModelAlias(auth *Auth, requestedModel string) strin
 		upstreamModel = resolveUpstreamModelForClaudeAPIKey(cfg, auth, requestedModel)
 	case "codex":
 		upstreamModel = resolveUpstreamModelForCodexAPIKey(cfg, auth, requestedModel)
+	case "qwen-rerank":
+		upstreamModel = resolveUpstreamModelForQwenRerankAPIKey(cfg, auth, requestedModel)
 	case "vertex":
 		upstreamModel = resolveUpstreamModelForVertexAPIKey(cfg, auth, requestedModel)
 	default:
@@ -1762,6 +1774,13 @@ func resolveCodexAPIKeyConfig(cfg *internalconfig.Config, auth *Auth) *internalc
 	return resolveAPIKeyConfig(cfg.CodexKey, auth)
 }
 
+func resolveQwenRerankAPIKeyConfig(cfg *internalconfig.Config, auth *Auth) *internalconfig.QwenRerankKey {
+	if cfg == nil {
+		return nil
+	}
+	return resolveAPIKeyConfig(cfg.QwenRerankKey, auth)
+}
+
 func resolveVertexAPIKeyConfig(cfg *internalconfig.Config, auth *Auth) *internalconfig.VertexCompatKey {
 	if cfg == nil {
 		return nil
@@ -1787,6 +1806,14 @@ func resolveUpstreamModelForClaudeAPIKey(cfg *internalconfig.Config, auth *Auth,
 
 func resolveUpstreamModelForCodexAPIKey(cfg *internalconfig.Config, auth *Auth, requestedModel string) string {
 	entry := resolveCodexAPIKeyConfig(cfg, auth)
+	if entry == nil {
+		return ""
+	}
+	return resolveModelAliasFromConfigModels(requestedModel, asModelAliasEntries(entry.Models))
+}
+
+func resolveUpstreamModelForQwenRerankAPIKey(cfg *internalconfig.Config, auth *Auth, requestedModel string) string {
+	entry := resolveQwenRerankAPIKeyConfig(cfg, auth)
 	if entry == nil {
 		return ""
 	}

@@ -118,6 +118,9 @@ type Config struct {
 	// These are used as fallbacks when the client does not send its own headers.
 	ClaudeHeaderDefaults ClaudeHeaderDefaults `yaml:"claude-header-defaults" json:"claude-header-defaults"`
 
+	// QwenRerankKey defines DashScope Qwen rerank API key configurations.
+	QwenRerankKey []QwenRerankKey `yaml:"qwen-rerank-api-key" json:"qwen-rerank-api-key"`
+
 	// OpenAICompatibility defines OpenAI API compatibility configurations for external providers.
 	OpenAICompatibility []OpenAICompatibility `yaml:"openai-compatibility" json:"openai-compatibility"`
 
@@ -515,6 +518,38 @@ type GeminiModel struct {
 
 func (m GeminiModel) GetName() string  { return m.Name }
 func (m GeminiModel) GetAlias() string { return m.Alias }
+
+// QwenRerankKey represents DashScope Qwen rerank API key configuration.
+type QwenRerankKey struct {
+	APIKey string `yaml:"api-key" json:"api-key"`
+
+	Priority int `yaml:"priority,omitempty" json:"priority,omitempty"`
+
+	Prefix string `yaml:"prefix,omitempty" json:"prefix,omitempty"`
+
+	BaseURL string `yaml:"base-url,omitempty" json:"base-url,omitempty"`
+
+	ProxyURL string `yaml:"proxy-url,omitempty" json:"proxy-url,omitempty"`
+
+	Models []QwenRerankModel `yaml:"models,omitempty" json:"models,omitempty"`
+
+	Headers map[string]string `yaml:"headers,omitempty" json:"headers,omitempty"`
+
+	ExcludedModels []string `yaml:"excluded-models,omitempty" json:"excluded-models,omitempty"`
+}
+
+func (k QwenRerankKey) GetAPIKey() string  { return k.APIKey }
+func (k QwenRerankKey) GetBaseURL() string { return k.BaseURL }
+
+// QwenRerankModel describes a qwen rerank model mapping.
+type QwenRerankModel struct {
+	Name string `yaml:"name" json:"name"`
+
+	Alias string `yaml:"alias" json:"alias"`
+}
+
+func (m QwenRerankModel) GetName() string  { return m.Name }
+func (m QwenRerankModel) GetAlias() string { return m.Alias }
 
 // OpenAICompatibility represents the configuration for OpenAI API compatibility
 // with external providers, allowing model aliases to be routed through OpenAI API format.

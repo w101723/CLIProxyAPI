@@ -56,6 +56,11 @@ func GetProviderName(modelName string) []string {
 		return providers
 	}
 
+	lowerModelName := strings.ToLower(strings.TrimSpace(modelName))
+	if strings.Contains(lowerModelName, "qwen") && strings.Contains(lowerModelName, "rerank") {
+		appendProvider("qwen-rerank")
+	}
+
 	return providers
 }
 

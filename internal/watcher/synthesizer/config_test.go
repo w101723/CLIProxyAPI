@@ -369,6 +369,44 @@ func TestConfigSynthesizer_OpenAICompat(t *testing.T) {
 	}
 }
 
+func TestConfigSynthesizer_QwenRerankKeys(t *testing.T) {
+	now := time.Now()
+	ctx := &SynthesisContext{
+		Config: &config.Config{
+			QwenRerankKey: []config.QwenRerankKey{{
+				APIKey:   "q-key",
+				BaseURL:  "https://dashscope.aliyuncs.com",
+				ProxyURL: "https://proxy",
+				Priority: 7,
+				Headers:  map[string]string{"X-Test": "1"},
+			}},
+		},
+		Now:         now,
+		IDGenerator: NewStableIDGenerator(),
+	}
+
+	auths, err := NewConfigSynthesizer().Synthesize(ctx)
+	if err != nil {
+		t.Fatalf("Synthesize() error = %v", err)
+	}
+	var found *coreauth.Auth
+	for _, auth := range auths {
+		if auth.Provider == "qwen-rerank" {
+			found = auth
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("expected qwen-rerank auth")
+	}
+	if found.Attributes["api_key"] != "q-key" || found.Attributes["base_url"] != "https://dashscope.aliyuncs.com" || found.Attributes["priority"] != "7" {
+		t.Fatalf("unexpected attrs = %#v", found.Attributes)
+	}
+	if found.ProxyURL != "https://proxy" {
+		t.Fatalf("proxy = %q", found.ProxyURL)
+	}
+}
+
 func TestConfigSynthesizer_VertexCompat(t *testing.T) {
 	synth := NewConfigSynthesizer()
 	ctx := &SynthesisContext{

@@ -422,6 +422,8 @@ func (s *Service) ensureExecutorsForAuthWithMode(a *coreauth.Auth, forceReplace 
 		s.coreManager.RegisterExecutor(executor.NewAntigravityExecutor(s.cfg))
 	case "claude":
 		s.coreManager.RegisterExecutor(executor.NewClaudeExecutor(s.cfg))
+	case "qwen-rerank":
+		s.coreManager.RegisterExecutor(executor.NewQwenRerankExecutor(s.cfg))
 	case "kimi":
 		s.coreManager.RegisterExecutor(executor.NewKimiExecutor(s.cfg))
 	default:
@@ -924,6 +926,16 @@ func (s *Service) registerModelsForAuth(a *coreauth.Auth) {
 			}
 		}
 		models = applyExcludedModels(models, excluded)
+	case "qwen-rerank":
+		if entry := s.resolveConfigQwenRerankKey(a); entry != nil {
+			models = buildQwenRerankConfigModels(entry)
+			if authKind == "apikey" {
+				excluded = entry.ExcludedModels
+			}
+		} else {
+			models = defaultQwenRerankModels()
+		}
+		models = applyExcludedModels(models, excluded)
 	case "kimi":
 		models = registry.GetKimiModels()
 		models = applyExcludedModels(models, excluded)
@@ -1178,6 +1190,40 @@ func (s *Service) resolveConfigVertexCompatKey(auth *coreauth.Auth) *config.Vert
 	return nil
 }
 
+func (s *Service) resolveConfigQwenRerankKey(auth *coreauth.Auth) *config.QwenRerankKey {
+	if auth == nil || s.cfg == nil {
+		return nil
+	}
+	var attrKey, attrBase string
+	if auth.Attributes != nil {
+		attrKey = strings.TrimSpace(auth.Attributes["api_key"])
+		attrBase = strings.TrimSpace(auth.Attributes["base_url"])
+	}
+	for i := range s.cfg.QwenRerankKey {
+		entry := &s.cfg.QwenRerankKey[i]
+		cfgKey := strings.TrimSpace(entry.APIKey)
+		cfgBase := strings.TrimSpace(entry.BaseURL)
+		if attrKey != "" && strings.EqualFold(cfgKey, attrKey) {
+			if cfgBase == "" || strings.EqualFold(cfgBase, attrBase) {
+				return entry
+			}
+			continue
+		}
+		if attrKey == "" && attrBase != "" && strings.EqualFold(cfgBase, attrBase) {
+			return entry
+		}
+	}
+	if attrKey != "" {
+		for i := range s.cfg.QwenRerankKey {
+			entry := &s.cfg.QwenRerankKey[i]
+			if strings.EqualFold(strings.TrimSpace(entry.APIKey), attrKey) {
+				return entry
+			}
+		}
+	}
+	return nil
+}
+
 func (s *Service) resolveConfigCodexKey(auth *coreauth.Auth) *config.CodexKey {
 	if auth == nil || s.cfg == nil {
 		return nil
@@ -1414,6 +1460,28 @@ func buildCodexConfigModels(entry *config.CodexKey) []*ModelInfo {
 		return nil
 	}
 	return registry.WithCodexBuiltins(buildConfigModels(entry.Models, "openai", "openai"))
+}
+
+func buildQwenRerankConfigModels(entry *config.QwenRerankKey) []*ModelInfo {
+	if entry == nil || len(entry.Models) == 0 {
+		return defaultQwenRerankModels()
+	}
+	return buildConfigModels(entry.Models, "alibaba", "rerank")
+}
+
+func defaultQwenRerankModels() []*ModelInfo {
+	now := time.Now().Unix()
+	return []*ModelInfo{
+		{
+			ID:                         "qwen3-rerank",
+			Object:                     "model",
+			Created:                    now,
+			OwnedBy:                    "alibaba",
+			Type:                       "rerank",
+			DisplayName:                "qwen3-rerank",
+			SupportedGenerationMethods: []string{"rerank"},
+		},
+	}
 }
 
 func rewriteModelInfoName(name, oldID, newID string) string {

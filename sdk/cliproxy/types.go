@@ -63,6 +63,9 @@ type APIKeyClientResult struct {
 	// CodexKeyCount is the number of Codex API keys loaded
 	CodexKeyCount int
 
+	// QwenRerankKeyCount is the number of Qwen rerank API keys loaded
+	QwenRerankKeyCount int
+
 	// OpenAICompatCount is the number of OpenAI compatibility API keys loaded
 	OpenAICompatCount int
 }
