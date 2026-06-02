@@ -107,7 +107,7 @@ func isSupportedImagesModel(model string) bool {
 	if idx := strings.LastIndex(baseModel, "/"); idx >= 0 && idx < len(baseModel)-1 {
 		baseModel = strings.TrimSpace(baseModel[idx+1:])
 	}
-	return baseModel == defaultImagesToolModel
+	return strings.Contains(strings.ToLower(baseModel), "image")
 }
 
 func rejectUnsupportedImagesModel(c *gin.Context, model string) bool {
